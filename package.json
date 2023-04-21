@@ -1,4 +1,5 @@
 {
+  "licence": "MIT",
   "name": "cf-worker-images",
   "version": "1.0.0",
   "devDependencies": {
