@@ -24,9 +24,7 @@ This project requires:
 3. Replace values in `wrangler.toml` including: name, ORIGIN, WORKER_HOST, CLOUDINARY_CLOUD
 4. Run `yarn` to install dependencies
 5. Run `yarn deploy` to deploy the worker to CloudFlare, this uses the `name` field in `wrangler.toml` to find your worker, and CloudFlare will require you to login
-
-- The first time you do this Cloudflare will launch your browser to let you authenticate
-
+   - The first time you do this Cloudflare will launch your browser to let you authenticate
 6. Run `yarn tail` to see live logs from the worker
 7. You should now be able to test your worker at a url like https://your-worker.your-domain.workers.dev
 
