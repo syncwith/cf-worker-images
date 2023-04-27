@@ -22,8 +22,10 @@ export default {
         getImageOriginUrl(env, request),
         request
       );
+      // Call the default Cloudflare fetch method to get the image from Cloudinary
       return fetch(imageRequest);
     } else {
+      // Ask Cloudflare to fetch the request from the origin
       return fetch(request);
     }
   },
