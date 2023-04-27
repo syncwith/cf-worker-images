@@ -1,34 +1,44 @@
-import { UserAgentCapabilities, getDeviceType, Env, getOriginalRequestHostReplace, getUserAgentCapabilities } from "./lib";
+import {
+  UserAgentCapabilities,
+  getDeviceType,
+  Env,
+  getOriginalRequestHostReplace,
+  getUserAgentCapabilities,
+} from "./lib";
 
-type ImageFormat = 'jpg' | 'png' | 'webp' | 'gif' | 'avif';
+type ImageFormat = "jpg" | "png" | "webp" | "gif" | "avif";
 
-const PARAM_FORMAT = 'f';
-const PARAM_POSTER = 'poster';
+const PARAM_FORMAT = "f";
+const PARAM_POSTER = "poster";
 
 const getImageFormat = (request: Request): ImageFormat | undefined => {
   const url = new URL(request.url);
   const filename = url.pathname.toLowerCase();
 
-  if (filename.endsWith('jpg') || filename.endsWith('jpeg')) {
-    return 'jpg';
+  if (filename.endsWith("jpg") || filename.endsWith("jpeg")) {
+    return "jpg";
   }
-  if (filename.endsWith('png')) {
-    return 'png';
+  if (filename.endsWith("png")) {
+    return "png";
   }
-  if (filename.endsWith('webp')) {
-    return 'webp';
+  if (filename.endsWith("webp")) {
+    return "webp";
   }
-  if (filename.endsWith('avif')) {
-    return 'avif';
+  if (filename.endsWith("avif")) {
+    return "avif";
   }
-  if (filename.endsWith('gif')) {
-    return 'gif';
+  if (filename.endsWith("gif")) {
+    return "gif";
   }
 
   return undefined;
-}
+};
 
-const getImageOutputOptions = (request: Request, format: ImageFormat | undefined, capabilities: UserAgentCapabilities): string[] => {
+const getImageOutputOptions = (
+  request: Request,
+  format: ImageFormat | undefined,
+  capabilities: UserAgentCapabilities
+): string[] => {
   // Handle a specific format request, for example converting an animated GIF to a WEBM video
   // with a query param like: /image/12345.gif?f=webm
   const url = new URL(request.url);
@@ -38,56 +48,55 @@ const getImageOutputOptions = (request: Request, format: ImageFormat | undefined
   }
 
   // Generate a poster (image) from a video, with a query param like: /image/12345.mp4?poster=1
-  const isPoster = url.searchParams.get(PARAM_POSTER) === '1';  
+  const isPoster = url.searchParams.get(PARAM_POSTER) === "1";
   if (isPoster) {
     // pg_0 tells Cloudinary to use the first frame of the video
     // try to deliver the poster in the most optimal format
-    if (capabilities.avif) return ['pg_0','f_avif'];
-    if (capabilities.webp) return ['pg_0','f_webp'];
-    return ['pg_0','f_png']; 
+    if (capabilities.avif) return ["pg_0", "f_avif"];
+    if (capabilities.webp) return ["pg_0", "f_webp"];
+    return ["pg_0", "f_png"];
   }
 
   const options: string[] = [];
 
-  if (format === 'gif') {
+  if (format === "gif") {
     // we handle animated GIFS differently for now, try to aggressively optimize them for quality
-    options.push('fl_lossy');
-    options.push('q_50');
-  }
-  else {
+    options.push("fl_lossy");
+    options.push("q_50");
+  } else {
     // scale images down (but never up)
-    options.push('c_limit'); 
+    options.push("c_limit");
     const deviceType = getDeviceType(request);
     // Choose a max width based on deviceType
-    if (deviceType === 'mobile') {
-      options.push('w_640');
-    } else if (deviceType === 'tablet') {
-      options.push('w_960');
+    if (deviceType === "mobile") {
+      options.push("w_640");
+    } else if (deviceType === "tablet") {
+      options.push("w_960");
     } else {
-      options.push('w_1200');
+      options.push("w_1200");
     }
     // Let Cloudinary optimize the image for quality
-    options.push('q_auto:good');
+    options.push("q_auto:good");
     // if we know what format it is (and its not GIF) then we can optimize it
     if (format) {
       if (capabilities.avif) {
-        options.push('f_avif');
+        options.push("f_avif");
       } else if (capabilities.webp) {
-        options.push('f_webp');
-      } else if (format === 'webp' || format === 'avif') {
+        options.push("f_webp");
+      } else if (format === "webp" || format === "avif") {
         // Downgrade from modern formats to PNG if not supported
-        options.push('f_png');
-      }  
+        options.push("f_png");
+      }
     }
   }
 
   return options;
-}
+};
 
 export const isCloudinaryRequest = (req: Request) => {
-  const userAgent = req.headers.get('User-Agent');
-  return userAgent && userAgent.indexOf('Cloudinary') >= 0;
-}
+  const userAgent = req.headers.get("User-Agent");
+  return userAgent && userAgent.indexOf("Cloudinary") >= 0;
+};
 
 export const getImageOriginUrl = (env: Env, request: Request) => {
   // Check if the client suppports AVIF or WebP
@@ -105,7 +114,9 @@ export const getImageOriginUrl = (env: Env, request: Request) => {
   parsed.searchParams.delete(PARAM_FORMAT);
   parsed.searchParams.delete(PARAM_POSTER);
 
-  const url = `https://res.cloudinary.com/${env.CLOUDINARY_CLOUD}/image/fetch/${options.join(',')}/${parsed.toString()}`;
-  console.log('Rewriting image origin url', url);
+  const url = `https://res.cloudinary.com/${
+    env.CLOUDINARY_CLOUD
+  }/image/fetch/${options.join(",")}/${parsed.toString()}`;
+  console.log("Rewriting image origin url", url);
   return url;
-}
+};
