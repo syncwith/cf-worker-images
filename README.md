@@ -40,3 +40,7 @@ This is a standard file for CloudFlare workers, where you specify configuration 
 2. `CLOUDINARY_CLOUD` This is the id of your cloud environment at Cloudinary, its likely a 10 character alphanumeric string
 3. `ORIGIN` is only for use in testing (not production), it should be your host name like `google.com`
 4. `WORKER_HOST` is only for use in testing (not production), it should be your worker's hostname, likely a value like `your-worker.your-domain.workers.dev`
+
+## Notes
+
+1. This project relies on your website's images having file extensions (eg gif, jpg, png) so it can identify the type of image. If your images don't have extensions, then they won't be transformed at all.
